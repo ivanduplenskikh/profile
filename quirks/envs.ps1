@@ -1,0 +1,1 @@
+$env:PROFILE_VERSION = "0.0.1"
