@@ -1,5 +1,10 @@
 function prompt {
-    "PS $($executionContext.SessionState.Path.CurrentLocation) [$(Get-CurrentGitBranch) $(Get-CommitCountAhead) $(Get-CommitCountBehind)] > "
+  $branch = Get-CurrentGitBranch
+  $ahead, $behind = Get-GitCommitDivergence
+  $aheadText = Format-GitCommitCount -Count $ahead -Indicator "↑"
+  $behindText = Format-GitCommitCount -Count $behind -Indicator "↓"
+
+  "PS $($executionContext.SessionState.Path.CurrentLocation) [$branch $aheadText $behindText] > "
 }
 
 function Get-CurrentGitBranch {
