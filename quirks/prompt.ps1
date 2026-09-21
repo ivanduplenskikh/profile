@@ -1,4 +1,9 @@
 function prompt {
+  if (-not (Test-GitRepository)) {
+    $global:ProfileGitPromptSignature = ""
+    return "PS $($executionContext.SessionState.Path.CurrentLocation) > "
+  }
+
   $branch = Get-CurrentGitBranch
   $ahead, $behind = Get-GitCommitDivergence
   $aheadText = Format-GitCommitCount -Count $ahead -Indicator "↑"
@@ -6,6 +11,10 @@ function prompt {
   $global:ProfileGitPromptSignature = Get-GitPromptSignature
 
   "PS $($executionContext.SessionState.Path.CurrentLocation) [$branch $aheadText $behindText] > "
+}
+
+function Test-GitRepository {
+  return (git rev-parse --is-inside-work-tree 2>$null) -eq "true"
 }
 
 function Get-CurrentGitBranch {
