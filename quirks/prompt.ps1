@@ -38,18 +38,29 @@ function Get-GitCommitDivergence {
     return @([int]$ahead, [int]$behind)
 }
 
+function Format-GitCommitCount {
+  param(
+    [int]$Count,
+    [string]$Indicator
+  )
+
+  $color = if ($Count -le 15) {
+    $PSStyle.Foreground.Green
+  } elseif ($Count -le 50) {
+    "`e[38;5;208m"
+  } else {
+    $PSStyle.Foreground.Red
+  }
+
+  return "$color$Indicator$Count$($PSStyle.Reset)"
+}
+
 function Get-CommitCountAhead {
-    $ahead = (Get-GitCommitDivergence)[0]
-    if (-not $ahead -or $ahead -eq 0) {
-        return "↑0"
-    }
-    return "↑$ahead"
+  $ahead = (Get-GitCommitDivergence)[0]
+  return Format-GitCommitCount -Count $ahead -Indicator "↑"
 }
 
 function Get-CommitCountBehind {
-    $behind = (Get-GitCommitDivergence)[1]
-    if (-not $behind -or $behind -eq 0) {
-        return "↓0"
-    }
-    return "↓$behind"
+  $behind = (Get-GitCommitDivergence)[1]
+  return Format-GitCommitCount -Count $behind -Indicator "↓"
 }
