@@ -10,7 +10,7 @@ The profile loads scripts from the `quirks` directory and currently provides:
 - A `PROFILE_VERSION` environment variable.
 - A custom prompt that shows the current Git branch and the number of commits ahead of or behind its upstream branch.
 - Color-coded divergence counts: green for 0-15 commits, orange for 16-50, and red for 51 or more.
-- Automatic divergence refresh whenever PowerShell redraws the prompt, including after commits, pulls, and pushes.
+- Automatic prompt redraw when Git state changes outside the terminal, such as a commit made through VS Code.
 - A fallback comparison against a local `main` or `master` branch when the current branch has no upstream.
 
 ## Why use it?

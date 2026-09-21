@@ -3,6 +3,7 @@ function prompt {
   $ahead, $behind = Get-GitCommitDivergence
   $aheadText = Format-GitCommitCount -Count $ahead -Indicator "↑"
   $behindText = Format-GitCommitCount -Count $behind -Indicator "↓"
+  $global:ProfileGitPromptSignature = Get-GitPromptSignature
 
   "PS $($executionContext.SessionState.Path.CurrentLocation) [$branch $aheadText $behindText] > "
 }
@@ -43,6 +44,23 @@ function Get-GitCommitDivergence {
     return @([int]$ahead, [int]$behind)
 }
 
+function Get-GitPromptSignature {
+  $gitDirectory = git rev-parse --absolute-git-dir 2>$null
+  if ($LASTEXITCODE -ne 0 -or -not $gitDirectory) {
+    return ""
+  }
+
+  $head = git rev-parse HEAD 2>$null
+  $comparisonRef = Get-GitComparisonRef
+  $comparisonCommit = if ($comparisonRef) {
+    git rev-parse $comparisonRef 2>$null
+  } else {
+    ""
+  }
+
+  return "$gitDirectory|$head|$comparisonRef|$comparisonCommit"
+}
+
 function Format-GitCommitCount {
   param(
     [int]$Count,
@@ -69,3 +87,56 @@ function Get-CommitCountBehind {
   $behind = (Get-GitCommitDivergence)[1]
   return Format-GitCommitCount -Count $behind -Indicator "↓"
 }
+
+function Enable-GitPromptAutoRefresh {
+  if (-not (Get-Module PSReadLine)) {
+    return
+  }
+
+  if ($global:ProfileGitPromptSubscriptionId) {
+    Unregister-Event -SubscriptionId $global:ProfileGitPromptSubscriptionId -ErrorAction SilentlyContinue
+  }
+
+  if ($global:ProfileGitPromptEventJobId) {
+    Remove-Job -Id $global:ProfileGitPromptEventJobId -Force -ErrorAction SilentlyContinue
+  }
+
+  $global:ProfileGitPromptSignature = Get-GitPromptSignature
+  $global:ProfileGitPromptLastCheck = 0L
+
+  $eventJob = Register-EngineEvent -SourceIdentifier PowerShell.OnIdle -Action {
+    $now = [Environment]::TickCount64
+    if ($now - $global:ProfileGitPromptLastCheck -lt 1000) {
+      return
+    }
+
+    $global:ProfileGitPromptLastCheck = $now
+    $signature = Get-GitPromptSignature
+    if ($signature -eq $global:ProfileGitPromptSignature) {
+      return
+    }
+
+    $global:ProfileGitPromptSignature = $signature
+    $useSynchronizedOutput = $Host.UI.SupportsVirtualTerminal
+    if ($useSynchronizedOutput) {
+      [Console]::Write("`e[?2026h")
+    }
+
+    try {
+      [Microsoft.PowerShell.PSConsoleReadLine]::InvokePrompt($null, $null)
+    } finally {
+      if ($useSynchronizedOutput) {
+        [Console]::Write("`e[?2026l")
+      }
+    }
+  }
+
+  $subscriber = Get-EventSubscriber -SourceIdentifier PowerShell.OnIdle |
+    Where-Object { $_.Action.Id -eq $eventJob.Id } |
+    Select-Object -First 1
+
+  $global:ProfileGitPromptEventJobId = $eventJob.Id
+  $global:ProfileGitPromptSubscriptionId = $subscriber.SubscriptionId
+}
+
+Enable-GitPromptAutoRefresh
