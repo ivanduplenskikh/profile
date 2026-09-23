@@ -27,10 +27,14 @@ function Get-GitComparisonRef {
         return $upstream
     }
 
-    $currentBranch = Get-CurrentGitBranch
-    foreach ($baseBranch in @("main", "master")) {
-        git show-ref --verify --quiet "refs/heads/$baseBranch" 2>$null
-        if ($LASTEXITCODE -eq 0 -and $baseBranch -ne $currentBranch) {
+    $originHead = git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>$null
+    if ($LASTEXITCODE -eq 0 -and $originHead) {
+        return $originHead
+    }
+
+    foreach ($baseBranch in @("origin/main", "origin/master")) {
+        git show-ref --verify --quiet "refs/remotes/$baseBranch" 2>$null
+        if ($LASTEXITCODE -eq 0) {
             return $baseBranch
         }
     }
