@@ -11,7 +11,7 @@ The profile loads scripts from the `quirks` directory and currently provides:
 - A custom prompt that shows the current Git branch, marks branches without an upstream as unpublished, and shows the number of commits ahead of or behind the comparison branch.
 - Color-coded divergence counts: green for 0-15 commits, orange for 16-50, and red for 51 or more.
 - Automatic prompt redraw when Git state changes outside the terminal, such as a commit made through VS Code.
-- A fallback comparison against a local `main` or `master` branch when the current branch has no upstream.
+- A fallback comparison against `origin/main` or `origin/master` for the ahead count when the current branch has no upstream; the behind count remains zero until the branch is published.
 
 ## Why use it?
 

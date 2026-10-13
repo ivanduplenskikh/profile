@@ -28,9 +28,9 @@ function Test-GitBranchHasUpstream {
 }
 
 function Get-GitComparisonRef {
-    $upstream = git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>$null
-    if ($LASTEXITCODE -eq 0 -and $upstream) {
-        return $upstream
+    $upstream = Get-GitUpstreamRef
+    if ($upstream) {
+      return $upstream
     }
 
     $originHead = git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>$null
@@ -48,7 +48,17 @@ function Get-GitComparisonRef {
     return ""
 }
 
+function Get-GitUpstreamRef {
+  $upstream = git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>$null
+  if ($LASTEXITCODE -eq 0 -and $upstream) {
+    return $upstream
+  }
+
+  return ""
+}
+
 function Get-GitCommitDivergence {
+    $upstream = Get-GitUpstreamRef
     $comparisonRef = Get-GitComparisonRef
     if (-not $comparisonRef) {
         return @(0, 0)
@@ -60,7 +70,8 @@ function Get-GitCommitDivergence {
     }
 
     $behind, $ahead = $counts -split "\s+"
-    return @([int]$ahead, [int]$behind)
+    $behind = if ($upstream) { [int]$behind } else { 0 }
+    return @([int]$ahead, $behind)
 }
 
 function Get-GitPromptSignature {
