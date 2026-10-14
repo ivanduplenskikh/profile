@@ -5,12 +5,13 @@ function prompt {
   }
 
   $branch = Get-CurrentGitBranch
+  $unpublishedText = if (-not (Test-GitBranchHasUpstream)) { " unpublished" } else { "" }
   $ahead, $behind = Get-GitCommitDivergence
   $aheadText = Format-GitCommitCount -Count $ahead -Indicator "↑"
   $behindText = Format-GitCommitCount -Count $behind -Indicator "↓"
   $global:ProfileGitPromptSignature = Get-GitPromptSignature
 
-  "PS $($executionContext.SessionState.Path.CurrentLocation) [$branch $aheadText $behindText] > "
+  "PS $($executionContext.SessionState.Path.CurrentLocation) [$branch$unpublishedText $aheadText $behindText] > "
 }
 
 function Test-GitRepository {
@@ -19,6 +20,11 @@ function Test-GitRepository {
 
 function Get-CurrentGitBranch {
     return git rev-parse --abbrev-ref HEAD 2>$null
+}
+
+function Test-GitBranchHasUpstream {
+  git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>$null | Out-Null
+  return $LASTEXITCODE -eq 0
 }
 
 function Get-GitComparisonRef {

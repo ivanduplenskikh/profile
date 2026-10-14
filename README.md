@@ -8,7 +8,7 @@ The profile loads scripts from the `quirks` directory and currently provides:
 
 - A `which` function backed by `Get-Command`.
 - A `PROFILE_VERSION` environment variable.
-- A custom prompt that shows the current Git branch and the number of commits ahead of or behind its upstream branch.
+- A custom prompt that shows the current Git branch, marks branches without an upstream as unpublished, and shows the number of commits ahead of or behind the comparison branch.
 - Color-coded divergence counts: green for 0-15 commits, orange for 16-50, and red for 51 or more.
 - Automatic prompt redraw when Git state changes outside the terminal, such as a commit made through VS Code.
 - A fallback comparison against a local `main` or `master` branch when the current branch has no upstream.
@@ -86,6 +86,7 @@ The output should include the current branch and divergence counters similar to:
 
 ```text
 PS C:\path\to\repository [main ↑0 ↓0] >
+PS C:\path\to\repository [feature unpublished ↑0 ↓0] >
 ```
 
 To test without changing the current session, start a clean PowerShell process that loads only this profile:
